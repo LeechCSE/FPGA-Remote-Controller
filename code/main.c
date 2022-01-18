@@ -74,11 +74,11 @@
 #define MAP_K_P 128.0
 #define MAP_K_R (32.0 / M_PI)
 
-struct Position{
+typedef struct Position{
 	float x;
 	float y;
 	float dir;
-};
+} Pos;
 
 /************************************
 ************** DISPLAY **************
@@ -109,7 +109,7 @@ void InitDisplay(){
 	XIo_Out32(XPAR_DVMA_0_BASEADDR + blDvmaCR, 0x00000003); // dvma enable, dfl enable
 }
 
-void MAP_UpdatePath(struct Position *pos, int16_t velocity, int16_t radius){
+void MAP_UpdatePath(Pos *pos, int16_t velocity, int16_t radius){
 	int16_t r_straight = 0x8000;
 	float n_x = pos->x;
 	float n_y = pos->y;
@@ -197,7 +197,7 @@ void MAP_UpdatePath(struct Position *pos, int16_t velocity, int16_t radius){
 	pos->dir = n_dir;
 }
 
-void MAP_ClearPath(struct Position *pos){
+void MAP_ClearPath(Pos *pos){
 	pos->dir = M_PI / 2.0;
 	pos->x = MAP_L_X / 2.0;
 	pos->y = MAP_L_Y / 6.0;
@@ -211,9 +211,9 @@ void MAP_ClearPath(struct Position *pos){
 }
 
 
-/************************************
-*********** COMMUNICATION ***********
-*************************************/
+/********************************
+*********** ROBOT COM ***********
+*********************************/
 void RBT_SendDriveCmd(int16_t velocity, int16_t radius){
 	union s16to2u8 {
 		int16_t s;
@@ -233,17 +233,17 @@ void RBT_SendDriveCmd(int16_t velocity, int16_t radius){
 /********************************
 *********** GYROSCOPE ***********
 *********************************/
-struct ReadingNode{
+typedef struct ReadingNode{
 	int16_t val;
-	struct ReadingNode *next;
-};
+	Node *next;
+} Node;
 
-struct ReadingQueue{
-	struct ReadingNode *head;
-	struct ReadingNode nodes[GYRO_AVG_PERIOD];
-};
+typedef struct ReadingQueue{
+	Node *head;
+	Node nodes[GYRO_AVG_PERIOD];
+} RQueue;
 
-void RQ_Init(struct ReadingQueue *rq){
+void RQ_Init(RQueue *rq){
 	rq->head = &(rq->nodes[0]);
 	
 	for (uint16_t i = 0; i < GYRO_AVG_PERIOD - 1; i++){
@@ -255,12 +255,12 @@ void RQ_Init(struct ReadingQueue *rq){
 	rq->nodes[GYRO_AVG_PERIOD - 1].next = rq->head;
 }
 
-void RQ_Push(struct ReadingQueue *rq, int16_t val){
+void RQ_Push(RQueue *rq, int16_t val){
 	rq->head->val = val;
 	rq->head = rq->head->next;
 }
 
-int16_t RQ_Avg(struct ReadingQueue *rq){
+int16_t RQ_Avg(RQueue *rq){
 	int32_t sum = 0;
 	
 	for (uint16_t i = 0; i < GYRO_AVG_PERIOD; i++)
@@ -408,13 +408,13 @@ int main(){
 	GYRO_InitCtrlRegs(&gyro_spi);
 
 	int16_t bias_roll, bias_pitch, bias_yaw;
-	struct ReadingQueue roll_q;
-	struct ReadingQueue pitch_q;
-	struct ReadingQueue yaw_q;
+	RQueue roll_q;
+	RQueue pitch_q;
+	RQueue yaw_q;
 	int16_t avg_roll, avg_pitch;//, avg_yaw;
 	int16_t radius, velocity, prev_out_v = 0, prev_out_r = 0;
 
-	struct Position pos;
+	Pos pos;
 
 	/* switches are ACTIVE LOW due to the board being turned around when in use */
 	while(XGpio_DiscreteRead(&sw_gpio, SWITCH_CHANNEL) & SWITCH_ON){} /*spin until ON switch flipped */
