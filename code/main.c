@@ -1,21 +1,22 @@
-#include "platform.h"
+// Board
 #include "xparameters.h"
-
+#include "platform.h"
+// GPIO Library
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "xgpio.h"
 #include "xil_io.h"
-
+// Pmod Library
 #include "xspi.h"
 #include "xspi_l.h"
 #include "PmodGYRO.h"
-
+// UartLite
 #include "xuartlite_l.h"
 #include "xuartlite.h"
 
-
+// Macro Definitions
 #define SWITCH_CHANNEL 1
 #define SWITCH_ON 0x80
 #define SWITCH_RUNNING 0xC0
@@ -27,10 +28,10 @@
 #define LED_INITIALIZING 0xC1
 #define LED_INIT_ROBOT 0x82
 
-#define GYRO_BIAS_PERIOD 256 /* amount of readings used to compute bias */
-#define GYRO_AVG_PERIOD 8 /* amount of readings used to compute most recent average */
-#define GYRO_THRESHOLD 512  /* dps */
-#define K_ROLL -256 //-1152 // -128
+#define GYRO_BIAS_PERIOD 256 // amount of readings used to compute bias
+#define GYRO_AVG_PERIOD 8 // amount of readings used to compute most recent average
+#define GYRO_THRESHOLD 512
+#define K_ROLL -256 
 #define K_PITCH 512
 #define K_YAW 128
 
@@ -45,11 +46,6 @@
 
 #define THRESH_OUT_V 25
 #define THRESH_OUT_R 50
-
-/* x: roll
- * y: pitch
- * z: yaw
- */
 
 #define blDvmaCR		0x00000000 // Control Reg Offset
 #define blDvmaFWR		0x00000004 // Frame Width Reg Offset
@@ -78,14 +74,16 @@
 #define MAP_K_P 128.0
 #define MAP_K_R (32.0 / M_PI)
 
-struct Position {
+struct Position{
 	float x;
 	float y;
 	float dir;
 };
 
-
-void InitDisplay() {
+/************************************
+************** DISPLAY **************
+*************************************/
+void InitDisplay(){
 	int posX, posY;
 	
 	for(posX = 0; posX<HDMI_L_X; posX++){
@@ -136,6 +134,7 @@ void MAP_UpdatePath(struct Position *pos, int16_t velocity, int16_t radius){
 	float slope;
 	float posX, posY;
 	int mapX, mapY, outX, outY;
+	
 	if ((int)pos->x == (int)n_x){
 		if (n_y >= pos->y){
 			for (posX = n_x, posY = pos->y; posY < n_y; ++posY){
@@ -178,7 +177,7 @@ void MAP_UpdatePath(struct Position *pos, int16_t velocity, int16_t radius){
 			}
 		}
 	} 
-	else {
+	else{
 		slope = (n_y - pos->y) / (n_x - pos->x);
 		for (posX = pos->x, posY = pos->y; posX >= n_x; posX--, posY += slope){
 			mapX = (int)posX;
@@ -211,6 +210,10 @@ void MAP_ClearPath(struct Position *pos){
 	}
 }
 
+
+/************************************
+*********** COMMUNICATION ***********
+*************************************/
 void RBT_SendDriveCmd(int16_t velocity, int16_t radius){
 	union s16to2u8 {
 		int16_t s;
@@ -227,6 +230,9 @@ void RBT_SendDriveCmd(int16_t velocity, int16_t radius){
 	XUartLite_SendByte(XPAR_XPS_UARTLITE_0_BASEADDR, r.b[1]);
 }
 
+/********************************
+*********** GYROSCOPE ***********
+*********************************/
 struct ReadingNode{
 	int16_t val;
 	struct ReadingNode *next;
@@ -320,13 +326,7 @@ void GYRO_WriteRegByte(XSpi *InstancePtr, u8 reg, u8 w_data){
 	//    bits 5-0 - the address
 
 	u8 buf_send[2] = {reg & 0x3F, w_data};
-	int rv = XSpi_Transfer(InstancePtr, buf_send, NULL, 2); /* only sending */
-	//if (rv == XST_FAILURE) xil_printf("ERROR: spi transfer when writing to reg failed\r\n");
-	/*
-	u8 test_byte = GYRO_ReadRegByte(InstancePtr, reg);
-	xil_printf("wrote 0x%02x to register\r\n", w_data);
-	xil_printf("data in register after write: 0x%02x\r\n", test_byte);
-	*/
+	int rv = XSpi_Transfer(InstancePtr, buf_send, NULL, 2);
 }
 
 void GYRO_InitCtrlRegs(XSpi *InstancePtr){
@@ -382,7 +382,8 @@ int main(){
 	//xil_printf("starting...\r\n");
 
 	InitDisplay();
-
+	
+	// GPIO
 	XGpio sw_gpio;
 	if (XGpio_Initialize(&sw_gpio, XPAR_FPGA_0_DIP_SWITCHES_8BIT_DEVICE_ID) != XST_SUCCESS){
 		//xil_printf("failed to init gpio switches\r\n");
@@ -396,7 +397,8 @@ int main(){
 		return XST_FAILURE;
 	}
 	XGpio_SetDataDirection(&led_gpio, LED_CHANNEL, 0x00);
-
+	
+	// PMOD_GYRO
 	XSpi gyro_spi;
 
 	if (GYRO_InitSpi(&gyro_spi) == XST_FAILURE){

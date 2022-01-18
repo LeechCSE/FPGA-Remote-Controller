@@ -1,9 +1,6 @@
 #ifndef PMODGYRO_H
 #define PMODGYRO_H
 
-
-/************ Macro Definitions ************/
-
 // Register Addresses
 #define GYRO_WHO_AM_I      0x0F
 #define GYRO_CTRL_REG1     0x20
@@ -62,10 +59,10 @@
 #define GYRO_INT1_XHIE  0x02
 #define GYRO_INT1_XLIE  0x01
 
+// GYRO Data Mode
 #define GYRO_BYPASS 	0x00
 #define GYRO_FIFO		0x10
 #define GYRO_STREAM 	0x20
-
 
 
 #endif // PMODGYRO_H
