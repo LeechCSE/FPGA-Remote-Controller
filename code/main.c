@@ -342,17 +342,20 @@ void GYRO_InitCtrlRegs(XSpi *InstancePtr){
 
 int16_t GYRO_GetRoll(XSpi *InstancePtr){
    uint16_t temp_data = GYRO_ReadRegByte(InstancePtr, GYRO_OUT_X_H);
-   return (int16_t)((temp_data << 8) | GYRO_ReadRegByte(InstancePtr, GYRO_OUT_X_L));
+   return (int16_t)((temp_data << 8) |
+		    GYRO_ReadRegByte(InstancePtr, GYRO_OUT_X_L));
 }
 
 int16_t GYRO_GetPitch(XSpi *InstancePtr){
    uint16_t temp_data = GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Y_H);
-   return (int16_t)((temp_data << 8) | GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Y_L));
+   return (int16_t)((temp_data << 8) |
+		    GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Y_L));
 }
 
 int16_t GYRO_GetYaw(XSpi *InstancePtr){
    uint16_t temp_data = GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Z_H);
-   return (int16_t)((temp_data << 8) | GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Z_L));
+   return (int16_t)((temp_data << 8) |
+		    GYRO_ReadRegByte(InstancePtr, GYRO_OUT_Z_L));
 }
 
 u8 GYRO_CheckData(XSpi *InstancePtr){
@@ -425,8 +428,8 @@ int main(){
       if (!(XGpio_DiscreteRead(&sw_gpio, SWITCH_CHANNEL) & SWITCH_INIT_ROBOT)){
          XGpio_DiscreteWrite(&led_gpio, LED_CHANNEL, LED_INIT_ROBOT);
          /* initialize irobot */
-         XUartLite_SendByte( XPAR_XPS_UARTLITE_0_BASEADDR, 0x80 ); // init
-         XUartLite_SendByte( XPAR_XPS_UARTLITE_0_BASEADDR, 0x84 ); // full mode
+         XUartLite_SendByte(XPAR_XPS_UARTLITE_0_BASEADDR, 0x80); // init
+         XUartLite_SendByte(XPAR_XPS_UARTLITE_0_BASEADDR, 0x84); // full mode
          for (int j = 0; j < 2; j++){
             for (int i = 0; i < 25000000; i++){
                asm("nop");
@@ -467,16 +470,25 @@ int main(){
                   cnt = 0;
                   int16_t out_radius, out_velocity;
                   
-                  if (velocity < MIN_VELOCITY)           out_velocity = MIN_VELOCITY;
-                  else if (velocity > MAX_VELOCITY)      out_velocity = MAX_VELOCITY;
-                  else if (abs(velocity) < MIN_V_THRESH) out_velocity = 0;
-                  else                                   out_velocity = velocity;
+                  if (velocity < MIN_VELOCITY)
+		    out_velocity = MIN_VELOCITY;
+                  else if (velocity > MAX_VELOCITY)
+		    out_velocity = MAX_VELOCITY;
+                  else if (abs(velocity) < MIN_V_THRESH)
+		    out_velocity = 0;
+                  else
+		    out_velocity = velocity;
 
-                  if (radius < MIN_RADIUS)               out_radius = -1;
-                  else if (radius > MAX_RADIUS)          out_radius = 1;
-                  else if (abs(radius) < MIN_R_THRESH)   out_radius = 0x8000;
-                  else if (radius < 0)                   out_radius = -1800 - radius;
-                  else                                   out_radius = 1800 - radius;
+                  if (radius < MIN_RADIUS)
+		    out_radius = -1;
+                  else if (radius > MAX_RADIUS)
+		    out_radius = 1;
+                  else if (abs(radius) < MIN_R_THRESH)
+		    out_radius = 0x8000;
+                  else if (radius < 0)
+		    out_radius = -1800 - radius;
+                  else
+		    out_radius = 1800 - radius;
                   
                   if (abs(prev_out_v - out_velocity) > THRESH_OUT_V 
                      || abs(prev_out_r - out_radius) > THRESH_OUT_R){
