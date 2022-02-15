@@ -471,24 +471,24 @@ int main(){
                   int16_t out_radius, out_velocity;
                   
                   if (velocity < MIN_VELOCITY)
-		    out_velocity = MIN_VELOCITY;
+                     out_velocity = MIN_VELOCITY;
                   else if (velocity > MAX_VELOCITY)
-		    out_velocity = MAX_VELOCITY;
+                     out_velocity = MAX_VELOCITY;
                   else if (abs(velocity) < MIN_V_THRESH)
-		    out_velocity = 0;
+                     out_velocity = 0;
                   else
-		    out_velocity = velocity;
+                     out_velocity = velocity;
 
                   if (radius < MIN_RADIUS)
-		    out_radius = -1;
+                     out_radius = -1;
                   else if (radius > MAX_RADIUS)
-		    out_radius = 1;
+                     out_radius = 1;
                   else if (abs(radius) < MIN_R_THRESH)
-		    out_radius = 0x8000;
+                     out_radius = 0x8000;
                   else if (radius < 0)
-		    out_radius = -1800 - radius;
+                     out_radius = -1800 - radius;
                   else
-		    out_radius = 1800 - radius;
+                     out_radius = 1800 - radius;
                   
                   if (abs(prev_out_v - out_velocity) > THRESH_OUT_V 
                      || abs(prev_out_r - out_radius) > THRESH_OUT_R){
